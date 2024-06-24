@@ -14,12 +14,11 @@ cursor = conn.cursor()
 # Создание таблицы для хранения данных
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS user_data (
-        user_id INTEGER,
+        user_id INTEGER PRIMARY KEY,
         data_type TEXT,
         route TEXT,
         cargo_name TEXT,
-        transport_type TEXT,
-        vehicle TEXT
+        transport_type TEXT
     )
 ''')
 
@@ -30,8 +29,7 @@ cursor.execute('''
         state TEXT,
         point_a TEXT,
         point_b TEXT,
-        transport_type TEXT,
-        vehicle TEXT
+        transport_type TEXT
     )
 ''')
 conn.commit()
@@ -61,18 +59,17 @@ def cancel_action(message):
 # Возвращает главное меню
 def get_main_menu():
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    item1 = types.KeyboardButton("Собрать информацию о грузе")
-    item2 = types.KeyboardButton("Собрать информацию о транспорте")
+    item1 = types.KeyboardButton("Парсинг груза")
+    item2 = types.KeyboardButton("Парсинг транспорта")
     item3 = types.KeyboardButton("/cancel")
     markup.add(item1, item2, item3)
     return markup
 
 
 # Обработка выбора
-@bot.message_handler(
-    func=lambda message: message.text in ["Собрать информацию о грузе", "Собрать информацию о транспорте"])
+@bot.message_handler(func=lambda message: message.text in ["Парсинг груза", "Парсинг транспорта"])
 def gather_information(message):
-    if message.text == "Собрать информацию о грузе":
+    if message.text == "Парсинг груза":
         cursor.execute('''
             INSERT OR REPLACE INTO user_states (user_id, state)
             VALUES (?, ?)
@@ -124,7 +121,7 @@ def get_point_b(message):
     route = f"{row[0]} - {row[1]}"
 
     cursor.execute('''
-        INSERT INTO user_data (user_id, data_type, route)
+        INSERT OR REPLACE INTO user_data (user_id, data_type, route)
         VALUES (?, ?, ?)
     ''', (message.chat.id, 'cargo', route))
     conn.commit()
@@ -146,17 +143,17 @@ def get_cargo_name(message):
     conn.commit()
 
     bot.send_message(message.chat.id, "Введите вид транспортного средства:")
-    bot.register_next_step_handler(message, get_vehicle)
+    bot.register_next_step_handler(message, get_transport_type_cargo)
 
 
-def get_vehicle(message):
+def get_transport_type_cargo(message):
     if message.text == "/cancel":
         cancel_action(message)
         return
 
     cursor.execute('''
         UPDATE user_data
-        SET vehicle = ?
+        SET transport_type = ?
         WHERE user_id = ? AND data_type = 'cargo'
     ''', (message.text, message.chat.id))
     conn.commit()
@@ -177,6 +174,22 @@ def get_transport_type(message):
         WHERE user_id = ?
     ''', (message.text, message.chat.id))
     conn.commit()
+    bot.send_message(message.chat.id, "Введите наименование груза:")
+    bot.register_next_step_handler(message, get_cargo_name_transport)
+
+
+def get_cargo_name_transport(message):
+    if message.text == "/cancel":
+        cancel_action(message)
+        return
+
+    cursor.execute('''
+        UPDATE user_data
+        SET cargo_name = ?
+        WHERE user_id = ? AND data_type = 'transport'
+    ''', (message.text, message.chat.id))
+    conn.commit()
+
     bot.send_message(message.chat.id, "Введите пункт А:")
     bot.register_next_step_handler(message, get_transport_point_a)
 
@@ -216,7 +229,7 @@ def get_transport_point_b(message):
     transport_type = row[2]
 
     cursor.execute('''
-        INSERT INTO user_data (user_id, data_type, route, transport_type)
+        INSERT OR REPLACE INTO user_data (user_id, data_type, route, transport_type)
         VALUES (?, ?, ?, ?)
     ''', (message.chat.id, 'transport', route, transport_type))
     conn.commit()
