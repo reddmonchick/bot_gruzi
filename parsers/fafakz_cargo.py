@@ -6,21 +6,6 @@ import re
 
 session = requests.Session()
 
-headers = {
-    'Host': 'm.fa-fa.ru',
-    'Accept': 'text/html, */*; q=0.01',
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 9; SM-S906N Build/PQ3A.190605.04081832; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Mobile Safari/537.36',
-    'X-Requested-With': 'XMLHttpRequest',
-    'Sec-Fetch-Site': 'same-origin',
-    'Sec-Fetch-Mode': 'cors',
-    'Sec-Fetch-Dest': 'empty',
-    'Referer': 'https://m.fa-fa.ru/',
-    # 'Accept-Encoding': 'gzip, deflate',
-    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Connection': 'close',
-    # 'Cookie': 'PHPSESSID=s39gour26gore07hlrtogbf4n4; bbuserid=306387; bbpassword=e6b024da4ddf41ecfd8df69d2abd64c9; _ym_uid=1719672596455476887; _ym_d=1719672596; _ymab_param=lucTyg4fB89Nq8j371CmUKczMT-xZMNakFrIEjqFUyjgHhD_GzJvGqwshVdrxf53dKXphenDtdTe1c5jsgFODN4PO9g; _ym_isad=2; _gid=GA1.2.564877948.1719672597; _gat_gtag_UA_113967512_1=1; _ga_295751JDV1=GS1.1.1719672596.1.0.1719672596.60.0.0; _ga=GA1.1.1746340065.1719672597',
-}
-
 vehicle_types = {
     "Крытая": -1,
     "Открытая": -2,
@@ -68,13 +53,38 @@ punkt_a = 'Казахстан'
 
 punkt_b = 'Россия'
 
+
+
 def find_vehicle_type(cargo_info):
     for vehicle in vehicle_types:
         if re.search(r'\b' + vehicle[:4], cargo_info, re.IGNORECASE):
             return vehicle
     return "Неизвестный тип"
 
-vehicl_typ = 'Любая'
+vehicl_typ = vehicle_types.get(input('Введите тип машины: ').capitalize(), '0')
+
+cookies = {
+            '_ym_uid': '1719577624223202900',
+            '_ym_d': '1719577624',
+            '_ga_3E9ZB9DLH7': 'GS1.1.1719922003.3.1.1719923330.0.0.0',
+            '_ga': 'GA1.1.395825761.1719577624',
+            '_ga_N8G7P3XR38': 'GS1.1.1719922003.3.1.1719923330.0.0.0',
+            'mid': '10384507',
+            'mid2': 'dd41475f3aea8698994d8fc04081d0ed',
+            '_gid': 'GA1.2.778041633.1719918404',
+            '_ym_isad': '1',
+            'bbuserid': '239374',
+            'bbpassword': '1eeea5178d88f76a0d3fd235cfbb77ca',
+            'c_uid': '239374',
+            'puid': '58a0086107c9b676c5bece0c1eda0dce',
+            'PHPSESSID': 'jdo1f48ttq5o56bafc05t61r97',
+            'bbuserid': '239374',
+            'bbpassword': '1eeea5178d88f76a0d3fd235cfbb77ca',
+            'ref_icon': '0',
+            '_ga_295751JDV1': 'GS1.1.1719923347.1.1.1719923466.60.0.0',
+            '_gat_gtag_UA_113967512_1': '1',
+            'whatsapp_drugu': '1',
+        }
 
 headers = {
     'Host': 'm.fa-fa.ru',
@@ -98,6 +108,24 @@ headers = {
 }
 
 params = {
+    'n': '1',
+    'str': punkt_a,
+}
+
+response = requests.get('https://fa-fa.kz/city.php', params=params,headers=headers, verify=False)
+soup = BeautifulSoup(response.text, 'html.parser')
+punkt_a = soup.find('div').text
+
+params = {
+    'n': '1',
+    'str': punkt_b,
+}
+
+response = requests.get('https://fa-fa.kz/city.php', params=params,headers=headers, verify=False)
+soup = BeautifulSoup(response.text, 'html.parser')
+punkt_b = soup.find('div').text
+
+params = {
     'blank': '1',
 }
 
@@ -114,24 +142,6 @@ for option in options:
     text = option.text
     if sid != "-1":
         pass
-
-
-
-headers = {
-    'Host': 'm.fa-fa.kz',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
-    # 'Accept-Encoding': 'gzip, deflate',
-    'Upgrade-Insecure-Requests': '1',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'none',
-    'Sec-Fetch-User': '?1',
-    'Priority': 'u=1',
-    # Requests doesn't support trailers
-    # 'Te': 'trailers',
-}
 
 params = {
     'sid': sid
@@ -167,6 +177,19 @@ for page in range(1, page_end+1):
     soup = BeautifulSoup(response.text, 'html.parser')
     for div in soup.find_all('div', id=pattern):
         route = div.find('font', class_='o_dest').text.strip()
+
+        id_div = div['id'].split('_')[-1]
+        print(id_div)
+
+        # Разделение маршрута на города и страны
+        match = re.search(r'(.+?),\s*(\w{2})\s*→\s*(.+?),\s*(\w{2})', route)
+        if match:
+            city_from = match.group(1).strip()
+            country_from = match.group(2).strip()
+            city_to = match.group(3).strip()
+            country_to = match.group(4).strip()
+        else:
+            city_from = country_from = city_to = country_to = "Неизвестно"
         dates = div.find_all('b')[0:2]
         date_from = dates[0].text.strip()
         date_to = dates[1].text.strip()
@@ -188,10 +211,19 @@ for page in range(1, page_end+1):
         price = price_match.group(0) if price_match else "Неизвестная цена"
         print(price)
 
-        flattens.append([route, date, cargo_type, weight, price, 'fafa-kz'])
+        params = {
+            'lid': id_div,
+        }
 
+        response = requests.get('https://m.fa-fa.kz/index/load_contacts/', params=params, cookies=cookies,
+                                headers=headers)
 
-column_xlsx = ['Маршрут', 'Дата', 'Тип машины/груза', 'Вес', 'Цена', 'Сайт']
+        flattens.append([city_from, country_from, city_to, country_to, date, cargo_type, weight, price, 'fafa-kz'])
+
+column_xlsx = ["Город отправления",
+        "Страна отправления",
+        "Город прибытия",
+        "Страна прибытия", 'Дата', 'Тип машины/груза', 'Вес', 'Цена', 'Сайт']
 file_path_write = 'output.xlsx'
 workbook = Workbook()
 worksheet = workbook.active
