@@ -42,7 +42,8 @@ def send_welcome(message):
         "Добро пожаловать! Я бот для сбора информации о грузах и транспорте.\n\n"
         "Доступные команды:\n"
         "/start - Начать работу с ботом и увидеть это сообщение\n"
-        "/cancel - Отменить текущее действие и вернуться к главному меню\n\n"
+        "/cancel - Отменить текущее действие и вернуться к главному меню\n"
+        "/info - Получить собранную информацию\n\n"
         "Выберите одну из опций ниже, чтобы начать сбор информации:"
     )
     bot.send_message(message.chat.id, welcome_text, reply_markup=get_main_menu())
@@ -54,6 +55,29 @@ def cancel_action(message):
     cursor.execute('DELETE FROM user_states WHERE user_id = ?', (message.chat.id,))
     conn.commit()
     bot.send_message(message.chat.id, "Действие отменено. Выберите опцию:", reply_markup=get_main_menu())
+
+
+# Команда /info
+@bot.message_handler(commands=['info'])
+def send_info(message):
+    cursor.execute('''
+        SELECT data_type, route, cargo_name, transport_type 
+        FROM user_data WHERE user_id = ?
+    ''', (message.chat.id,))
+    data = cursor.fetchone()
+
+    if data:
+        data_type, route, cargo_name, transport_type = data
+        info_text = (
+            f"Тип данных: {data_type}\n"
+            f"Маршрут: {route}\n"
+            f"Наименование груза: {cargo_name}\n"
+            f"Тип транспортного средства: {transport_type}"
+        )
+    else:
+        info_text = "Нет данных для отображения."
+
+    bot.send_message(message.chat.id, info_text)
 
 
 # Возвращает главное меню
@@ -162,6 +186,20 @@ def get_transport_type_cargo(message):
     cursor.execute('DELETE FROM user_states WHERE user_id = ?', (message.chat.id,))
     conn.commit()
 
+    # Получение данных после завершения сбора информации о грузе
+    cursor.execute('''
+        SELECT data_type, route, cargo_name, transport_type 
+        FROM user_data WHERE user_id = ?
+    ''', (message.chat.id,))
+    data = cursor.fetchone()
+
+    if data:
+        data_type, route, cargo_name, transport_type = data
+        # Теперь вы можете работать с этими данными в дальнейшем коде
+        print(f"Данные собраны:\nТип данных: {data_type}\nМаршрут: {route}\nНаименование груза: {cargo_name}\nТип транспортного средства: {transport_type}")
+    else:
+        print("Нет данных для отображения.")
+
 
 def get_transport_type(message):
     if message.text == "/cancel":
@@ -238,6 +276,19 @@ def get_transport_point_b(message):
     cursor.execute('DELETE FROM user_states WHERE user_id = ?', (message.chat.id,))
     conn.commit()
 
+    # Получение данных после завершения сбора информации о транспорте
+    cursor.execute('''
+        SELECT data_type, route, cargo_name, transport_type 
+        FROM user_data WHERE user_id = ?
+    ''', (message.chat.id,))
+    data = cursor.fetchone()
 
-# Запуск бота
-bot.polling(none_stop=True)
+    if data:
+        data_type, route, cargo_name, transport_type = data
+        # Теперь вы можете работать с этими данными в дальнейшем коде
+        print(f"Данные собраны:\nТип данных: {data_type}\nМаршрут: {route}\nНаименование груза: {cargo_name}\nТип транспортного средства: {transport_type}")
+    else:
+        print("Нет данных для отображения.")
+
+
+bot.polling()
