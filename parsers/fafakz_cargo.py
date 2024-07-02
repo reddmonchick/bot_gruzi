@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from curl_cffi import requests
 from openpyxl import Workbook, load_workbook
 import re
+import time
 
 session = requests.Session()
 
@@ -87,32 +88,30 @@ cookies = {
         }
 
 headers = {
-    'Host': 'm.fa-fa.ru',
-    # 'Content-Length': '457',
-    'Cache-Control': 'max-age=0',
-    'Upgrade-Insecure-Requests': '1',
-    'Origin': 'https://m.fa-fa.ru',
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 9; SM-S906N Build/PQ3A.190605.04081832; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Mobile Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    'X-Requested-With': 'com.fafa.kz',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
+    'Accept': 'text/html, */*',
+    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
+    # 'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Alt-Used': 'fa-fa.kz',
+    'Connection': 'keep-alive',
+    'Referer': 'https://fa-fa.kz/search_load/',
+    # 'Cookie': '_ga_3E9ZB9DLH7=GS1.1.1719954953.12.1.1719954955.0.0.0; _ga=GA1.2.1858377429.1717621778; _ga_N8G7P3XR38=GS1.1.1719954953.13.1.1719954955.0.0.0; _ym_uid=1717621778108757811; _ym_d=1717621778; mid=10394511; mid2=7a001a6f5229051f4ada1810bdff3668; c_uid=239374; _ga_295751JDV1=GS1.1.1719902909.6.1.1719904785.60.0.0; _gid=GA1.2.2034431614.1719829465; _ym_isad=1; bbuserid=239374; bbpassword=c97a60f50e3466e948d29aee676caca3; puid=58a0086107c9b676c5bece0c1eda0dce; PHPSESSID=98rpv1qcgahrriqckbgshp27t6; _gat_gtag_UA_76271908_1=1',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Site': 'same-origin',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-User': '?1',
-    'Sec-Fetch-Dest': 'document',
-    'Referer': 'https://m.fa-fa.ru/load_m/?sid=32067061',
-    # 'Accept-Encoding': 'gzip, deflate',
-    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Connection': 'close',
-    # 'Cookie': 'PHPSESSID=s39gour26gore07hlrtogbf4n4; bbuserid=306387; bbpassword=e6b024da4ddf41ecfd8df69d2abd64c9; _ym_uid=1719672596455476887; _ym_d=1719672596; _ymab_param=lucTyg4fB89Nq8j371CmUKczMT-xZMNakFrIEjqFUyjgHhD_GzJvGqwshVdrxf53dKXphenDtdTe1c5jsgFODN4PO9g; _ym_isad=2; _gid=GA1.2.564877948.1719672597; _gat_gtag_UA_113967512_1=1; _ga_295751JDV1=GS1.1.1719672596.1.1.1719673468.13.0.0; _ga=GA1.2.1746340065.1719672597',
+    # Requests doesn't support trailers
+    # 'TE': 'trailers',
 }
+
+
 
 params = {
     'n': '1',
     'str': punkt_a,
 }
 
-response = requests.get('https://fa-fa.kz/city.php', params=params,headers=headers, verify=False)
+response = session.get('https://fa-fa.kz/city.php', params=params,headers=headers)
 soup = BeautifulSoup(response.text, 'html.parser')
 punkt_a = soup.find('div').text
 
@@ -121,7 +120,7 @@ params = {
     'str': punkt_b,
 }
 
-response = requests.get('https://fa-fa.kz/city.php', params=params,headers=headers, verify=False)
+response = session.get('https://fa-fa.kz/city.php', params=params,headers=headers)
 soup = BeautifulSoup(response.text, 'html.parser')
 punkt_b = soup.find('div').text
 
@@ -215,8 +214,11 @@ for page in range(1, page_end+1):
             'lid': id_div,
         }
 
-        response = requests.get('https://m.fa-fa.kz/index/load_contacts/', params=params, cookies=cookies,
+        response = session.get('https://m.fa-fa.kz/index/load_contacts/', params=params, cookies=cookies,
                                 headers=headers)
+        print(response.text)
+
+        time.sleep(1)
 
         flattens.append([city_from, country_from, city_to, country_to, date, cargo_type, weight, price, 'fafa-kz'])
 
