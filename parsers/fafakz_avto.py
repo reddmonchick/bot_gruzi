@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from curl_cffi import requests
 from openpyxl import Workbook, load_workbook
 import re
+import time
 
 session = requests.Session()
 
@@ -53,8 +54,6 @@ punkt_a = 'Казахстан'
 
 punkt_b = 'Россия'
 
-
-
 def find_vehicle_type(cargo_info):
     for vehicle in vehicle_types:
         if re.search(r'\b' + vehicle[:4], cargo_info, re.IGNORECASE):
@@ -87,24 +86,20 @@ cookies = {
         }
 
 headers = {
-    'Host': 'm.fa-fa.ru',
-    # 'Content-Length': '457',
-    'Cache-Control': 'max-age=0',
-    'Upgrade-Insecure-Requests': '1',
-    'Origin': 'https://m.fa-fa.ru',
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'User-Agent': 'Mozilla/5.0 (Linux; Android 9; SM-S906N Build/PQ3A.190605.04081832; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Mobile Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    'X-Requested-With': 'com.fafa.kz',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
+    'Accept': 'text/html, */*',
+    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
+    # 'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Alt-Used': 'fa-fa.kz',
+    'Connection': 'keep-alive',
+    'Referer': 'https://fa-fa.kz/search_load/',
+    # 'Cookie': '_ga_3E9ZB9DLH7=GS1.1.1719954953.12.1.1719954955.0.0.0; _ga=GA1.2.1858377429.1717621778; _ga_N8G7P3XR38=GS1.1.1719954953.13.1.1719954955.0.0.0; _ym_uid=1717621778108757811; _ym_d=1717621778; mid=10394511; mid2=7a001a6f5229051f4ada1810bdff3668; c_uid=239374; _ga_295751JDV1=GS1.1.1719902909.6.1.1719904785.60.0.0; _gid=GA1.2.2034431614.1719829465; _ym_isad=1; bbuserid=239374; bbpassword=c97a60f50e3466e948d29aee676caca3; puid=58a0086107c9b676c5bece0c1eda0dce; PHPSESSID=98rpv1qcgahrriqckbgshp27t6; _gat_gtag_UA_76271908_1=1',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Site': 'same-origin',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-User': '?1',
-    'Sec-Fetch-Dest': 'document',
-    'Referer': 'https://m.fa-fa.ru/load_m/?sid=32067061',
-    # 'Accept-Encoding': 'gzip, deflate',
-    'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Connection': 'close',
-    # 'Cookie': 'PHPSESSID=s39gour26gore07hlrtogbf4n4; bbuserid=306387; bbpassword=e6b024da4ddf41ecfd8df69d2abd64c9; _ym_uid=1719672596455476887; _ym_d=1719672596; _ymab_param=lucTyg4fB89Nq8j371CmUKczMT-xZMNakFrIEjqFUyjgHhD_GzJvGqwshVdrxf53dKXphenDtdTe1c5jsgFODN4PO9g; _ym_isad=2; _gid=GA1.2.564877948.1719672597; _gat_gtag_UA_113967512_1=1; _ga_295751JDV1=GS1.1.1719672596.1.1.1719673468.13.0.0; _ga=GA1.2.1746340065.1719672597',
+    # Requests doesn't support trailers
+    # 'TE': 'trailers',
 }
 
 params = {
@@ -112,7 +107,8 @@ params = {
     'str': punkt_a,
 }
 
-response = requests.get('https://fa-fa.kz/city.php', params=params,headers=headers, verify=False)
+response = session.get('https://fa-fa.kz/city.php', params=params,headers=headers)
+print(response)
 soup = BeautifulSoup(response.text, 'html.parser')
 punkt_a = soup.find('div').text
 
@@ -121,7 +117,7 @@ params = {
     'str': punkt_b,
 }
 
-response = requests.get('https://fa-fa.kz/city.php', params=params,headers=headers, verify=False)
+response = session.get('https://fa-fa.kz/city.php', params=params,headers=headers)
 soup = BeautifulSoup(response.text, 'html.parser')
 punkt_b = soup.find('div').text
 
@@ -129,38 +125,50 @@ params = {
     'blank': '1',
 }
 
+headers = {
+    'Host': 'fa-fa.kz',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3',
+    # 'Accept-Encoding': 'gzip, deflate',
+    'Content-Type': 'application/x-www-form-urlencoded',
+    # 'Content-Length': '201',
+    'Origin': 'https://fa-fa.kz',
+    'Referer': 'https://fa-fa.kz/search_car/',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-Fetch-User': '?1',
+    'Priority': 'u=1',
+    # Requests doesn't support trailers
+    # 'Te': 'trailers',
+    # 'Cookie': '_ga_3E9ZB9DLH7=GS1.1.1720046845.14.1.1720047817.0.0.0; _ga=GA1.2.1858377429.1717621778; _ga_N8G7P3XR38=GS1.1.1720046845.15.1.1720047817.0.0.0; _ym_uid=1717621778108757811; _ym_d=1717621778; mid=10394511; mid2=7a001a6f5229051f4ada1810bdff3668; c_uid=239374; _ga_295751JDV1=GS1.1.1719902909.6.1.1719904785.60.0.0; bbuserid=239374; bbpassword=c97a60f50e3466e948d29aee676caca3; puid=58a0086107c9b676c5bece0c1eda0dce; PHPSESSID=236ls96rb0cu5hr2nu0a5hqba1; _gid=GA1.2.1138017272.1720043543; _ym_isad=1',
+}
 data = f'type_add=car&form_type_kuz=&form_type=&type21={vehicl_typ}&adr=0&w_ot=&w_do=&v_ot=&v_do=&dat1=0&dat2=7&siz1=&siz2=&siz3=&sload=0&city1={punkt_a}&rad1=&city4={punkt_b}&rad4=&car_search='
 response = session.post('https://fa-fa.kz/search_car/', params=params,  headers=headers, data=data)
+print(response)
 if response.status_code == 302:
     sid = response.headers.get('Location', '').split('sid=')[-1]
 
 soup = BeautifulSoup(response.text, 'html.parser')
-options = soup.select('#sid_hist option')
+td_tag = soup.find('td', class_='search_s2')
 
-for option in options:
-    sid = option.get('value', '-1')
-    text = option.text
-    if sid != "-1":
-        sid = '-1'
+if td_tag:
+    onclick_value = td_tag.get('onclick')
+    if onclick_value:
+        # Разбиваем строку по символу '=' и берем последний элемент
+        sid = onclick_value.split('=')[-1].split('&')[0].split("'")[0]
+        print("SID:", sid)
+    else:
+        print("Атрибут onClick не найден.")
+else:
+    sid = ''
 
 params = {
     'sid': sid
 }
 
-response = session.get('https://fa-fa.kz/search_car/', params=params, headers=headers, data=data)
-
-print(response, sid)
-soup = BeautifulSoup(response.text, 'html.parser')
-title_tag = soup.title
-
-# Extract text content from the <title> tag
-if title_tag:
-    title_text = title_tag.get_text().split('(')[-1].split('.)')[0].strip('�').strip('найдено').strip('шт').strip('')
-    if title_text:
-        page_end = int(title_text) // 20 + 1
-
-    else:
-        page_end = 0
 
 
 
@@ -168,7 +176,7 @@ flattens = []
 
 pattern = re.compile(r'^res_\d+$')
 
-for page in range(1, page_end+1):
+for page in range(1, 1+1):
     response = session.get(f'https://fa-fa.kz/search_car/{page}/', params=params, headers=headers)
     print(response)
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -176,51 +184,62 @@ for page in range(1, page_end+1):
         route = div.find('font', class_='o_dest').text.strip()
 
         id_div = div['id'].split('_')[-1]
-        print(id_div)
 
-        # Разделение маршрута на города и страны
-        match = re.search(r'(.+?),\s*(\w{2})\s*→\s*(.+?),\s*(\w{2})', route)
-        if match:
-            city_from = match.group(1).strip()
-            country_from = match.group(2).strip()
-            city_to = match.group(3).strip()
-            country_to = match.group(4).strip()
+        print(route)
+        departure_country_code = route.split('-')[0].split('(')[-1].strip(')').strip('(')
+        departure_city = route.split('(')[0].strip()
+
+        arrival_city = route.split('-')[-1].strip()
+        if arrival_city == 'Любое направление':
+            arrival_city = arrival_country_code = 'Любое направление'
         else:
-            city_from = country_from = city_to = country_to = "Неизвестно"
+            arrival_city = route.split('-')[-1].split('(')[0].strip()
+
+            arrival_country_code = route.split('-')[-1].split('(')[-1].strip(')')
+
         dates = div.find_all('b')[0:2]
         date_from = dates[0].text.strip()
         date_to = dates[1].text.strip()
         date = f"{date_from} - {date_to}"
 
         # Извлечение информации о типе машины/груза
-        cargo_info = div.find_all('td', valign='top')[1].get_text(separator=' ').strip()
+        cargo_info = div.find_all('td', valign='top')[1].find(text=True, recursive=False)
+        print(cargo_info)
 
         # Поиск типа машины/груза
         cargo_type = find_vehicle_type(cargo_info)
 
         # Извлечение веса
-        weight_match = re.search(r'(\d+)\s*\/', div.find('b', id=re.compile(r'^w_v_\d+$')).text)
-        weight = weight_match.group(1) if weight_match else "Неизвестный вес"
+        weight_match = div.find('td', attrs={'style': 'width:8%;max-width:80px;'}).find('b').text.split('/')[0].strip()
+        print(weight_match)
 
-        price = div.find_all('tr')[-1].find_all('td')[-1]
         price_info = div.find_all('td', valign='top')[2].get_text(separator=' ').strip()
         price_match = re.search(r'(\d[\d\s\.\,]*\d)', price_info)
-        price = price_match.group(0) if price_match else "Неизвестная цена"
-        print(price)
+        price = price_match.group(0) if price_match and len(
+            price_match.group(0).replace(' ', '').replace(',', '')) >= 4 else "Неизвестная цена"
 
         params = {
-            'lid': id_div,
+            'bid': id_div,
         }
 
-        response = requests.get('https://m.fa-fa.kz/index/load_contacts/', params=params, cookies=cookies,
+        response = session.get('https://fa-fa.kz/index/car_contacts/', params=params, cookies=cookies,
                                 headers=headers)
+        print(f'contact {response}')
+        soup = BeautifulSoup(response.text, 'html.parser')
+        contact = ''
+        for i in soup.find_all('a'):
+            str1 = i.text.strip()
+            contact += str1
 
-        flattens.append([city_from, country_from, city_to, country_to, date, cargo_type, weight, price, 'fafa-kz'])
+        contact = f''
+        time.sleep(1)
 
-column_xlsx = ["Город отправления",
+        flattens.append([route, departure_country_code, departure_city, arrival_city, arrival_country_code, date, cargo_type, weight_match, price, contact , 'fafa-kz'])
+
+column_xlsx = ["Маршрут", "Город отправления",
         "Страна отправления",
         "Город прибытия",
-        "Страна прибытия", 'Дата', 'Тип машины/груза', 'Вес', 'Цена', 'Сайт']
+        "Страна прибытия", 'Дата', 'Тип машины/груза', 'Вес', 'Цена', 'Контакты' , 'Сайт']
 file_path_write = 'output.xlsx'
 workbook = Workbook()
 worksheet = workbook.active
