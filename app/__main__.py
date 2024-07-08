@@ -2,6 +2,8 @@ import telebot
 from telebot import types
 import sqlite3
 
+from .parsers import AtiSu
+
 # Вставьте сюда ваш токен
 API_TOKEN = '6941556547:AAFJ8CXePmDrd_CpfX7xUty294cdQqkXcBE'
 
@@ -182,23 +184,7 @@ def get_transport_type_cargo(message):
     ''', (message.text, message.chat.id))
     conn.commit()
 
-    bot.send_message(message.chat.id, "Спасибо! Информация о грузе собрана.")
-    cursor.execute('DELETE FROM user_states WHERE user_id = ?', (message.chat.id,))
-    conn.commit()
-
-    # Получение данных после завершения сбора информации о грузе
-    cursor.execute('''
-        SELECT data_type, route, cargo_name, transport_type 
-        FROM user_data WHERE user_id = ?
-    ''', (message.chat.id,))
-    data = cursor.fetchone()
-
-    if data:
-        data_type, route, cargo_name, transport_type = data
-        # Теперь вы можете работать с этими данными в дальнейшем коде
-        print(f"Данные собраны:\nТип данных: {data_type}\nМаршрут: {route}\nНаименование груза: {cargo_name}\nТип транспортного средства: {transport_type}")
-    else:
-        print("Нет данных для отображения.")
+    finalize_data_collection(message)
 
 
 def get_transport_type(message):
@@ -272,11 +258,14 @@ def get_transport_point_b(message):
     ''', (message.chat.id, 'transport', route, transport_type))
     conn.commit()
 
-    bot.send_message(message.chat.id, "Спасибо! Информация о транспорте собрана.")
+    finalize_data_collection(message)
+
+
+def finalize_data_collection(message):
+    bot.send_message(message.chat.id, "Спасибо! Информация собрана.")
     cursor.execute('DELETE FROM user_states WHERE user_id = ?', (message.chat.id,))
     conn.commit()
 
-    # Получение данных после завершения сбора информации о транспорте
     cursor.execute('''
         SELECT data_type, route, cargo_name, transport_type 
         FROM user_data WHERE user_id = ?
@@ -285,8 +274,24 @@ def get_transport_point_b(message):
 
     if data:
         data_type, route, cargo_name, transport_type = data
-        # Теперь вы можете работать с этими данными в дальнейшем коде
         print(f"Данные собраны:\nТип данных: {data_type}\nМаршрут: {route}\nНаименование груза: {cargo_name}\nТип транспортного средства: {transport_type}")
+
+        a = route.split('-')[0]
+        b = route.split('-')[-1]
+        atisik = AtiSu(a, b, transport_type, cargo_name)
+        if data_type == 'cargo':
+            atisik.run_gruz()
+        else:
+            print('запустили авто')
+            atisik.run_avto()
+
+        try:
+            with open('output.xlsx', 'rb') as file:
+                bot.send_document(message.chat.id, file)
+            bot.send_message(message.chat.id, "Файл output.xlsx отправлен.")
+        except Exception as e:
+            bot.send_message(message.chat.id, f"Произошла ошибка при отправке файла: {e}")
+
     else:
         print("Нет данных для отображения.")
 
