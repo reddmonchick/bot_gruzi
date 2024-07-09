@@ -222,17 +222,16 @@ class FafakzCargo:
                     'lid': id_div,
                 }
 
-                #response = session.get('https://m.fa-fa.kz/index/load_contacts/', params=params, cookies=cookies,
-                                        #headers=headers)
+                response = session.get('https://m.fa-fa.kz/index/load_contacts/', params=params, cookies=cookies,
+                                        headers=headers)
 
-                #print(f'contact {response}')
-                #soup = BeautifulSoup(response.text, 'html.parser')
+                print(f'contact {response}')
+                soup = BeautifulSoup(response.text, 'html.parser')
                 contact = ''
-                #for i in soup.find_all('a'):
-                    #str1 = i.text.strip()
-                    #print(str1)
-
-                    #contact += str1
+                for i in soup.find_all('a'):
+                    str1 = i.text.strip()
+                    print(str1)
+                    contact += str1
 
                 time.sleep(1)
 

@@ -176,7 +176,7 @@ flattens = []
 
 pattern = re.compile(r'^res_\d+$')
 
-for page in range(1, 1+1):
+for page in range(1, +1):
     response = session.get(f'https://fa-fa.kz/search_car/{page}/', params=params, headers=headers)
     print(response)
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -214,6 +214,8 @@ for page in range(1, 1+1):
         print(weight_match)
 
         price_info = div.find_all('td', valign='top')[2].get_text(separator=' ').strip()
+
+
         price_match = re.search(r'(\d[\d\s\.\,]*\d)', price_info)
         price = price_match.group(0) if price_match and len(
             price_match.group(0).replace(' ', '').replace(',', '')) >= 4 else "Неизвестная цена"
@@ -229,9 +231,8 @@ for page in range(1, 1+1):
         contact = ''
         for i in soup.find_all('a'):
             str1 = i.text.strip()
-            contact += str1
+            contact += f'{str1} '
 
-        contact = f''
         time.sleep(1)
 
         flattens.append([route, departure_country_code, departure_city, arrival_city, arrival_country_code, date, cargo_type, weight_match, price, contact , 'fafa-kz'])
