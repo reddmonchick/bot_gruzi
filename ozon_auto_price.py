@@ -1,7 +1,7 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import requests
 from datetime import datetime
+from curl_cffi import requests
 
 # Загрузка учетных данных и настройка клиента
 crede = {
@@ -17,6 +17,9 @@ crede = {
   "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/ozon-actii%40wbapi-410011.iam.gserviceaccount.com",
   "universe_domain": "googleapis.com"
 }
+
+s = requests.Session()
+
 # Указываем области видимости, которые будут использоваться
 scopes = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets",
           "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
@@ -96,23 +99,34 @@ def get_ozon_product_ids(api_key, action_type):
         "offset": 0
     }
 
-    response = requests.post(url, headers=headers, json=payload)
+    response = s.post(url, headers=headers, json=payload)
     col_pages = int(response.json().get('result', {}).get('total'))
 
+    result = []
+
     for offset in range(0, col_pages + 1000, 1000):
-    data = response.json()
-    return [item["id"] for item in data.get('result', {}).get('products', [])]
+        payload = {
+            "action_id": action_type,
+            "limit": 10,
+            "offset": offset
+        }
+        response = s.post(url, headers=headers, json=payload)
+        data = response.json()
+        result.extend([item["id"] for item in data.get('result', {}).get('products', [])])
+
+    return result
 
 # Получаем ID товаров для каждой акции
 x2_product_ids = get_ozon_product_ids(api_key, x2id)
 x3_product_ids = get_ozon_product_ids(api_key, x3id)
 x4_product_ids = get_ozon_product_ids(api_key, x4id)
 
-print(x2_product_ids, x3_product_ids)
+
 
 # Записываем полученные данные обратно в таблицу
 def update_sheet_with_ids(sheet, column_name, product_ids):
     col_idx = all_values[0].index(column_name) + 1  # Номер столбца с нужным названием
+    print(col_idx)
     for row_idx, product_id in enumerate(product_ids, start=2):  # Начинаем со второй строки
         sheet.update_cell(row_idx, col_idx, product_id)
 
