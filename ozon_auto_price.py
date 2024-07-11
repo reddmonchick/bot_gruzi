@@ -121,7 +121,10 @@ x2_product_ids = get_ozon_product_ids(api_key, x2id)
 x3_product_ids = get_ozon_product_ids(api_key, x3id)
 x4_product_ids = get_ozon_product_ids(api_key, x4id)
 
+sheet = spreadsheet.worksheet('Таблица текущих цен и акций')
 
+print(sheet)
+all_values = sheet.get_all_values()
 
 # Записываем полученные данные обратно в таблицу
 def update_sheet_with_ids(sheet, column_name, product_ids):
