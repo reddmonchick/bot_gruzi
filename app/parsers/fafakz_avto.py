@@ -60,7 +60,7 @@ def find_vehicle_type(cargo_info):
             return vehicle
     return "Неизвестный тип"
 
-vehicl_typ = vehicle_types.get(input('Введите тип машины: ').capitalize(), '0')
+vehicl_typ = vehicle_types.get('Тент'.capitalize(), '0')
 
 cookies = {
             '_ym_uid': '1719577624223202900',
@@ -176,7 +176,7 @@ flattens = []
 
 pattern = re.compile(r'^res_\d+$')
 
-for page in range(1, +1):
+for page in range(1, 1+1):
     response = session.get(f'https://fa-fa.kz/search_car/{page}/', params=params, headers=headers)
     print(response)
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -217,6 +217,7 @@ for page in range(1, +1):
 
 
         price_match = re.search(r'(\d[\d\s\.\,]*\d)', price_info)
+        print(price_match)
         price = price_match.group(0) if price_match and len(
             price_match.group(0).replace(' ', '').replace(',', '')) >= 4 else "Неизвестная цена"
 
