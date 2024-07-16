@@ -331,16 +331,148 @@ def get_ozon_idu(action_type):
 
     return result
 
+def get_prices(product_ids):
+    url = "https://api-seller.ozon.ru/v4/product/info/prices"
+    headers = {
+        "Client-Id": client_id,
+        "Api-Key": api_key
+    }
+    prices = []
+    chunk_size = 1000  # размер чанка
+    c = 0
+
+    for chunk in chunk_list(product_ids, chunk_size):
+
+        json_data = {
+            'filter': {
+                'product_id': chunk,
+                'visibility': 'ALL',
+            },
+            'last_id': '',
+            'limit': 1000,
+        }
+        response = requests.post(url, json=json_data, headers=headers)
+        print(f'prices {response} {c} | {len(product_ids)}')
+        c += 1000
+        if response.status_code == 200:
+            data = response.json()
+            for item in data["result"]['items']:
+                prices.append(item.get("price", {}).get('price', ''))
+        else:
+            for product_id in chunk:
+                pass
+    return prices
+
 x2_product_idu = get_ozon_idu(x2id)
 x3_product_idu = get_ozon_idu(x3id)
 x4_product_idu = get_ozon_idu(x4id)
 x2_articul_idu = get_ozon_articul(x2_product_idu)
 x3_articul_idu = get_ozon_articul(x3_product_idu)
 x4_articul_idu = get_ozon_articul(x4_product_idu)
+x2_price = get_prices(x2_product_idu)
+x3_price = get_prices(x3_product_idu)
+x4_price = get_prices(x4_product_idu)
 
-update_sheet_with_ids(sheet, "X2IDU", [x2_product_idu, x2_articul_idu])
-update_sheet_with_ids(sheet, "X3IDU", [x3_product_idu, x3_articul_idu])
-update_sheet_with_ids(sheet, "X4IDU", [x4_product_idu, x4_articul_idu])
+def update_sheet_with_prices(sheet, column_name, product_ids):
+    all_values = sheet.get_all_values()
+    if column_name == 'X2IDU':
+        price_column_name = 'X2PRICE'
+    elif column_name == 'X3IDU':
+        price_column_name = 'X3PRICE'
+    elif column_name == 'X4IDU':
+        price_column_name = 'X4PRICE'
+    else:
+        raise ValueError("Unknown column name")
+
+    col_idx = all_values[0].index(column_name) + 1
+    price_col_idx = all_values[0].index(price_column_name) + 1
+    articul_col_idx = all_values[0].index("Артикул") + 1
+
+    # Список для batch_update
+    batch_updates = []
+
+    for row_idx, row in enumerate(all_values[1:], start=2):
+        for product_id, articul, price in zip(product_ids[0], product_ids[1], product_ids[2]):
+            if row[articul_col_idx - 1] == articul:
+                # Добавляем обновление для идентификатора
+                batch_updates.append({
+                    'range': f'{gspread.utils.rowcol_to_a1(row_idx, col_idx)}',
+                    'values': [[product_id]]
+                })
+                # Добавляем обновление для цены
+                batch_updates.append({
+                    'range': f'{gspread.utils.rowcol_to_a1(row_idx, price_col_idx)}',
+                    'values': [[price]]
+                })
+
+    # Выполняем batch_update
+    if batch_updates:
+        sheet.batch_update(batch_updates)
+
+print(x2_price)
+
+update_sheet_with_prices(sheet, "X2IDU", [x2_product_idu, x2_articul_idu, x2_price])
+update_sheet_with_prices(sheet, "X3IDU", [x3_product_idu, x3_articul_idu, x3_price])
+update_sheet_with_prices(sheet, "X4IDU", [x4_product_idu, x4_articul_idu, x4_price])
+
+
+# тут мы должны вступить в акции
+
+
+def update_sheet_with_ids(sheet, column_name, product_ids):
+    all_values = sheet.get_all_values()
+    col_idx = all_values[0].index(column_name) + 1
+    articul_col_idx = all_values[0].index("Артикул") + 1
+
+    column_o_idx = all_values[0].index("O") + 1
+    column_t_idx = all_values[0].index("T") + 1
+    column_y_idx = all_values[0].index("Y") + 1
+    column_m_idx = all_values[0].index("M") + 1
+
+    # Список для batch_update
+    batch_updates = []
+
+    for row_idx, row in enumerate(all_values[1:], start=2):
+        for product_id, articul in zip(product_ids[0], product_ids[1]):
+            if row[articul_col_idx - 1] == articul:
+                # Добавляем обновление в список
+                batch_updates.append({
+                    'range': f'{gspread.utils.rowcol_to_a1(row_idx, col_idx)}',
+                    'values': [[product_id]]
+                })
+
+
+
+    # Выполняем batch_update
+    if batch_updates:
+        sheet.batch_update(batch_updates)
+
+x2_product_ids = get_ozon_product_ids(x2id)
+x3_product_ids = get_ozon_product_ids(x3id)
+x4_product_ids = get_ozon_product_ids(x4id)
+x2_articul = get_ozon_articul(x2_product_ids)
+x3_articul = get_ozon_articul(x3_product_ids)
+x4_articul = get_ozon_articul(x4_product_ids)
+
+update_sheet_with_ids(sheet, "X2IDVA", [x2_product_ids, x2_articul])
+update_sheet_with_ids(sheet, "X3IDVA", [x3_product_ids, x3_articul])
+update_sheet_with_ids(sheet, "X4IDVA", [x4_product_ids, x4_articul])
+
+column_o = sheet.col_values(15)  # столбец O (15 столбец в таблице)
+column_t = sheet.col_values(20)  # столбец T (20 столбец в таблице)
+column_y = sheet.col_values(25)  # столбец Y (25 столбец в таблице)
+
+# Проходимся по каждой строке, начиная с второй (первая строка обычно заголовок)
+for i in range(2, len(column_o) + 1):
+    if column_o[i - 1].strip().isdigit():
+        sheet.update_cell(i, 13, 'X2')  # столбец M (13 столбец в таблице)
+    if column_t[i - 1].strip().isdigit():
+        sheet.update_cell(i, 13, 'X3')  # столбец M (13 столбец в таблице)
+    if column_y[i - 1].strip().isdigit():
+        sheet.update_cell(i, 13, 'X4')  # столбец M (13 столбец в таблице)
+    else:
+        sheet.update_cell(i, 13, 'Нет акции')  # столбец M (13 столбец в таблице)
+
 
 print("Запланированные задачи выполнены.")
 
