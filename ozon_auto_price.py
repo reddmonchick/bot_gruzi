@@ -187,6 +187,11 @@ def update_sheet_with_ids(sheet, column_name, product_ids):
     if batch_updates:
         sheet.batch_update(batch_updates)
 
+ranges_to_clear = ['O2:O50000', 'U2:U50000', 'AA2:AA50000']
+
+# Очищаем указанные диапазоны
+for cell_range in ranges_to_clear:
+    sheet.batch_clear([cell_range])
 
 # Пример использования
 update_sheet_with_ids(sheet, "X2IDVA", [x2_product_ids, x2_articul])
