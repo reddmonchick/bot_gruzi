@@ -424,10 +424,6 @@ def update_sheet_with_ids(sheet, column_name, product_ids):
     col_idx = all_values[0].index(column_name) + 1
     articul_col_idx = all_values[0].index("Артикул") + 1
 
-    column_o_idx = all_values[0].index("O") + 1
-    column_t_idx = all_values[0].index("T") + 1
-    column_y_idx = all_values[0].index("Y") + 1
-    column_m_idx = all_values[0].index("M") + 1
 
     # Список для batch_update
     batch_updates = []
@@ -459,8 +455,8 @@ update_sheet_with_ids(sheet, "X3IDVA", [x3_product_ids, x3_articul])
 update_sheet_with_ids(sheet, "X4IDVA", [x4_product_ids, x4_articul])
 
 column_o = sheet.col_values(15)  # столбец O (15 столбец в таблице)
-column_t = sheet.col_values(20)  # столбец T (20 столбец в таблице)
-column_y = sheet.col_values(25)  # столбец Y (25 столбец в таблице)
+column_t = sheet.col_values(21)  # столбец T (20 столбец в таблице)
+column_y = sheet.col_values(27)  # столбец Y (25 столбец в таблице)
 
 # Проходимся по каждой строке, начиная с второй (первая строка обычно заголовок)
 for i in range(2, len(column_o) + 1):
