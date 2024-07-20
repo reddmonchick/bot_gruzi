@@ -94,6 +94,20 @@ headers = {
     }
 s = requests.Session()
 s.headers.update(headers)
+
+sheet = spreadsheet.worksheet('Таблица текущих цен и акций')
+
+def chunk_list(lst, chunk_size):
+    """Разбивает список на чанки по chunk_size элементов."""
+    for i in range(0, len(lst), chunk_size):
+        yield lst[i:i + chunk_size]
+
+
+
+
+
+
+
 def get_ozon_product_ids(action_type):
     url = "https://api-seller.ozon.ru/v1/actions/products"  # Пример URL для получения данных о товарах в акциях
 
@@ -120,12 +134,6 @@ def get_ozon_product_ids(action_type):
         result.extend([item["id"] for item in data.get('result', {}).get('products', [])])
 
     return result
-
-
-def chunk_list(lst, chunk_size):
-    """Разбивает список на чанки по chunk_size элементов."""
-    for i in range(0, len(lst), chunk_size):
-        yield lst[i:i + chunk_size]
 
 
 def get_ozon_articul(products: list):
@@ -159,8 +167,6 @@ x4_product_ids = get_ozon_product_ids(x4id)
 x2_articul = get_ozon_articul(x2_product_ids)
 x3_articul = get_ozon_articul(x3_product_ids)
 x4_articul = get_ozon_articul(x4_product_ids)
-
-sheet = spreadsheet.worksheet('Таблица текущих цен и акций')
 
 print(sheet)
 all_values = sheet.get_all_values()
@@ -306,7 +312,7 @@ def scheduled_tasks():
 
 
 # Запуск запланированных задач
-#scheduled_tasks()
+scheduled_tasks()
 
 def get_ozon_idu(action_type):
     url = "https://api-seller.ozon.ru/v1/actions/candidates"  # Пример URL для получения данных о товарах в акциях
@@ -336,7 +342,7 @@ def get_ozon_idu(action_type):
 
     return result
 
-def get_prices(product_ids):
+def get_prices(product_ids: list, type_price: str):
     url = "https://api-seller.ozon.ru/v4/product/info/prices"
     headers = {
         "Client-Id": client_id,
@@ -362,7 +368,7 @@ def get_prices(product_ids):
         if response.status_code == 200:
             data = response.json()
             for item in data["result"]['items']:
-                prices.append(item.get("price", {}).get('price', ''))
+                prices.append(item.get("price", {}).get(type_price, '').split('.')[0])
         else:
             for product_id in chunk:
                 pass
@@ -374,9 +380,9 @@ x4_product_idu = get_ozon_idu(x4id)
 x2_articul_idu = get_ozon_articul(x2_product_idu)
 x3_articul_idu = get_ozon_articul(x3_product_idu)
 x4_articul_idu = get_ozon_articul(x4_product_idu)
-x2_price = get_prices(x2_product_idu)
-x3_price = get_prices(x3_product_idu)
-x4_price = get_prices(x4_product_idu)
+x2_price = get_prices(x2_product_idu, 'marketing_price')
+x3_price = get_prices(x3_product_idu, 'marketing_price')
+x4_price = get_prices(x4_product_idu, 'marketing_price')
 
 def update_sheet_with_prices(sheet, column_name, product_ids):
     all_values = sheet.get_all_values()
@@ -415,6 +421,13 @@ def update_sheet_with_prices(sheet, column_name, product_ids):
         sheet.batch_update(batch_updates)
 
 print(x2_price)
+
+ranges_to_clear = ['N2:N50000', 'T2:T50000', 'Z2:Z50000']
+
+# Очищаем указанные диапазоны
+for cell_range in ranges_to_clear:
+    sheet.batch_clear([cell_range])
+
 
 update_sheet_with_prices(sheet, "X2IDU", [x2_product_idu, x2_articul_idu, x2_price])
 update_sheet_with_prices(sheet, "X3IDU", [x3_product_idu, x3_articul_idu, x3_price])
@@ -463,6 +476,13 @@ column_o = sheet.col_values(15)  # столбец O (15 столбец в таб
 column_t = sheet.col_values(21)  # столбец T (20 столбец в таблице)
 column_y = sheet.col_values(27)  # столбец Y (25 столбец в таблице)
 
+ranges_to_clear = ['M2:M50000']
+
+# Очищаем указанные диапазоны
+for cell_range in ranges_to_clear:
+    sheet.batch_clear([cell_range])
+
+
 # Проходимся по каждой строке, начиная с второй (первая строка обычно заголовок)
 for i in range(2, len(column_o) + 1):
     if column_o[i - 1].strip().isdigit():
@@ -475,7 +495,54 @@ for i in range(2, len(column_o) + 1):
         sheet.update_cell(i, 13, 'Нет акции')  # столбец M (13 столбец в таблице)
 
 
-print("Запланированные задачи выполнены.")
+
+def get_prices_current(products: list):
+    url = 'https://api-seller.ozon.ru/v2/product/info/list'
+    all_offer_ids = []
+    c = 1
+    # Разбиваем список products на чанки по 1000 элементов
+    for chunk in chunk_list(products, 1):
+        json_data = {
+            'offer_id': [],
+            'product_id': [],
+            'sku': chunk,
+        }
+
+        response = s.post(url, json=json_data)
+        print(f'price current {response} {len(products)} | {c}')
+        if response.status_code == 200:
+            data = response.json()
+            for item in data.get('result', {}).get('items', []):
+                all_offer_ids.append(item.get('price', '0').split('.')[0])
+        else:
+            print(f"Error {response.status_code}: {response.text}")
+        c += 1
+
+    return all_offer_ids
+
+ranges_to_clear = ['D2:D50000']
+
+# Очищаем указанные диапазоны
+for cell_range in ranges_to_clear:
+    sheet.batch_clear([cell_range])
+
+lst = sheet.col_values(2)
+
+print(lst)
+
+prices = get_prices_current(lst)
+
+column_c_values = [[value] for value in prices]
+
+# Определяем диапазон для записи в столбец C
+cell_list = sheet.range(f'D2:D{len(column_c_values)}')
+
+# Заполняем значения в cell_list
+for i, cell in enumerate(cell_list):
+    cell.value = column_c_values[i][0]
+
+# Обновляем значения в Google Sheets
+sheet.update_cells(cell_list)
 
 
 

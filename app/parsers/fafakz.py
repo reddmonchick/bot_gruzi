@@ -94,6 +94,14 @@ def find_vehicle_type(cargo_info):
             return vehicle
     return "Неизвестный тип"
 
+def get_transport_id_by_initials(initials, transport_dict):
+    # Приведем первые 3 буквы к нижнему регистру для сравнения
+    initials = initials[:3].lower()
+    for transport, id in transport_dict.items():
+        if transport[:3].lower() == initials:
+            return id
+    return None
+
 class Fafakz:
 
 
