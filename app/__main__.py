@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 import sqlite3
 
-from .parsers import AtiSu, Fafakz
+from .parsers import AtiSu, Fafakz, CargoKz
 
 # Вставьте сюда ваш токен
 API_TOKEN = '6941556547:AAFJ8CXePmDrd_CpfX7xUty294cdQqkXcBE'
@@ -280,6 +280,9 @@ def finalize_data_collection(message):
         b = route.split('-')[-1]
         atisik = AtiSu(a, b, transport_type, cargo_name)
         fafakz = Fafakz(a, b, transport_type)
+        cargo_kz = CargoKz(a, b, transport_type, cargo_name)
+
+
         if data_type == 'cargo':
             try:
                 atisik.run_gruz()
@@ -289,6 +292,10 @@ def finalize_data_collection(message):
                 fafakz.run_gruz()
             except:
                 print('Ошибка в фафа кз')
+            try:
+                cargo_kz.run_gruz()
+            except:
+                print('Ошибка в карго кз')
         else:
             print('запустили авто')
             try:
@@ -299,6 +306,10 @@ def finalize_data_collection(message):
                 fafakz.run_avto()
             except:
                 print('Ошибка в фафа кз')
+            try:
+                cargo_kz.run_avto()
+            except:
+                print('Ошибка в карго кз')
 
         try:
             with open('output.xlsx', 'rb') as file:
