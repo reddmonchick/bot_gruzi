@@ -112,7 +112,8 @@ def get_ozon_idu(action_type):
     response = s.post(url, json=payload)
     col_pages = int(response.json().get('result', {}).get('total'))
 
-    result = []
+    result_id = []
+    result_price = []
 
     for offset in range(0, col_pages + 100, 100):
         payload = {
@@ -123,16 +124,18 @@ def get_ozon_idu(action_type):
         response = s.post(url, json=payload)
         print(offset, response)
         data = response.json()
-        result.append([[item["id"] for item in data.get('result', {}).get('products', [])], [item["action_price"] for item in data.get('result', {}).get('products', [])]])
+        result_id.extend([item["id"] for item in data.get('result', {}).get('products', [])])
+        result_price.extend([item["action_price"] for item in data.get('result', {}).get('products', [])])
+    return result_id, result_price
 
-    return result
+
+
 def get_ozon_articul(products: list):
     url = 'https://api-seller.ozon.ru/v2/product/info/list'
     all_offer_ids = []
-    c = 100
+    c = 1000
     # Разбиваем список products на чанки по 1000 элементов
-    for chunk in chunk_list(products, 100):
-        print(chunk)
+    for chunk in chunk_list(products, 1000):
         json_data = {
             'offer_id': [],
             'product_id': chunk,
@@ -147,23 +150,23 @@ def get_ozon_articul(products: list):
                 all_offer_ids.append(item.get('offer_id'))
         else:
             print(f"Error {response.status_code}: {response.text}")
-        c += 100
+        c += 1000
 
     return all_offer_ids
 
 
-x2 = get_ozon_idu(x2id)
-x3 = get_ozon_idu(x3id)
-x4 = get_ozon_idu(x4id)
-x2_articul_idu = get_ozon_articul(x2[0])
-x3_articul_idu = get_ozon_articul(x3[0])
-x4_articul_idu = get_ozon_articul(x4[0])
-x2_price = x2[-1]
-x3_price = x3[-1]
-x4_price = x4[-1]
-x4_product_idu = x4[0]
-x3_product_idu = x3[0]
-x2_product_idu = x2[0]
+x2_id, x2_price = get_ozon_idu(x2id)
+x3_id, x3_price = get_ozon_idu(x3id)
+x4_id, x4_price = get_ozon_idu(x4id)
+x2_articul_idu = get_ozon_articul(x2_id)
+x3_articul_idu = get_ozon_articul(x3_id)
+x4_articul_idu = get_ozon_articul(x4_id)
+x2_price = x2_price
+x3_price = x3_price
+x4_price = x4_price
+x4_product_idu = x4_id
+x3_product_idu = x3_id
+x2_product_idu = x2_id
 
 
 def update_sheet_with_prices(sheet, column_name, product_ids):
@@ -202,7 +205,6 @@ def update_sheet_with_prices(sheet, column_name, product_ids):
     if batch_updates:
         sheet.batch_update(batch_updates)
 
-print(x2_price)
 
 ranges_to_clear = ['P2:P50000', 'V2:V50000', 'AB2:AB50000']
 
@@ -210,9 +212,11 @@ ranges_to_clear = ['P2:P50000', 'V2:V50000', 'AB2:AB50000']
 for cell_range in ranges_to_clear:
     sheet.batch_clear([cell_range])
 
-
+print('Обновляем X2PRICE')
 update_sheet_with_prices(sheet, "X2IDU", [x2_product_idu, x2_articul_idu, x2_price])
+print('Обновляем X3PRICE')
 update_sheet_with_prices(sheet, "X3IDU", [x3_product_idu, x3_articul_idu, x3_price])
+print('Обновляем X4PRICE')
 update_sheet_with_prices(sheet, "X4IDU", [x4_product_idu, x4_articul_idu, x4_price])
 
 
