@@ -125,7 +125,7 @@ def get_ozon_idu(action_type):
         print(offset, response)
         data = response.json()
         result_id.extend([item["id"] for item in data.get('result', {}).get('products', [])])
-        result_price.extend([item["action_price"] for item in data.get('result', {}).get('products', [])])
+        result_price.extend([item["max_action_price"] for item in data.get('result', {}).get('products', [])])
     return result_id, result_price
 
 
@@ -207,6 +207,12 @@ def update_sheet_with_prices(sheet, column_name, product_ids):
 
 
 ranges_to_clear = ['P2:P50000', 'V2:V50000', 'AB2:AB50000']
+
+# Очищаем указанные диапазоны
+for cell_range in ranges_to_clear:
+    sheet.batch_clear([cell_range])
+
+ranges_to_clear = ['N2:N50000', 'T2:T50000', 'Z2:Z50000']
 
 # Очищаем указанные диапазоны
 for cell_range in ranges_to_clear:
