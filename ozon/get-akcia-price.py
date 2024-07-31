@@ -1,5 +1,4 @@
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 from curl_cffi import requests
 import schedule
@@ -130,9 +129,10 @@ def get_ozon_idu(action_type):
 def get_ozon_articul(products: list):
     url = 'https://api-seller.ozon.ru/v2/product/info/list'
     all_offer_ids = []
-    c = 1000
+    c = 100
     # Разбиваем список products на чанки по 1000 элементов
-    for chunk in chunk_list(products, 1000):
+    for chunk in chunk_list(products, 100):
+        print(chunk)
         json_data = {
             'offer_id': [],
             'product_id': chunk,
@@ -147,7 +147,7 @@ def get_ozon_articul(products: list):
                 all_offer_ids.append(item.get('offer_id'))
         else:
             print(f"Error {response.status_code}: {response.text}")
-        c += 1000
+        c += 100
 
     return all_offer_ids
 
@@ -204,7 +204,7 @@ def update_sheet_with_prices(sheet, column_name, product_ids):
 
 print(x2_price)
 
-ranges_to_clear = ['N2:N50000', 'T2:T50000', 'Z2:Z50000']
+ranges_to_clear = ['P2:P50000', 'V2:V50000', 'AB2:AB50000']
 
 # Очищаем указанные диапазоны
 for cell_range in ranges_to_clear:
