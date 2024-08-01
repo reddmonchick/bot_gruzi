@@ -6,6 +6,8 @@ import schedule
 import time
 
 
+
+# Загрузка учетных данных и настройка клиента
 crede = {
   "type": "service_account",
   "project_id": "wbapi-410011",
@@ -95,115 +97,55 @@ s.headers.update(headers)
 
 sheet = spreadsheet.worksheet('Таблица текущих цен и акций')
 
+all_values = sheet.get_all_values()
 
 def chunk_list(lst, chunk_size):
     """Разбивает список на чанки по chunk_size элементов."""
     for i in range(0, len(lst), chunk_size):
         yield lst[i:i + chunk_size]
 
-def get_ozon_product_ids(action_type):
-    url = "https://api-seller.ozon.ru/v1/actions/products"  # Пример URL для получения данных о товарах в акциях
 
-    print(headers, action_type)
-    payload = {
-        "action_id": action_type,
-        "limit": 100,
-        "offset": 0
-    }
 
-    response = s.post(url, json=payload)
-    col_pages = int(response.json().get('result', {}).get('total'))
-
-    result = []
-
-    for offset in range(0, col_pages + 100, 100):
-        payload = {
-            "action_id": action_type,
-            "limit": 100,
-            "offset": offset
-        }
-        response = s.post(url, headers=headers, json=payload)
-        print(offset, response)
-        data = response.json()
-        result.extend([item["id"] for item in data.get('result', {}).get('products', [])])
-
-    return result
-
-def remove_from_action(api_key, product_ids, action_type):
-    url = "https://api-seller.ozon.ru/v1/actions/products/deactivate"  # Пример URL для удаления товаров из акций
+def set_product_price(api_key, products):
+    url = "https://api-seller.ozon.ru/v1/product/import/prices"  # Пример URL для обновления цены товара
+    print(api_key)
     headers = {
         "Client-Id": client_id,
         "Api-Key": api_key,
         "Content-Type": "application/json"
     }
 
+    payload = {
+        "prices": products
+    }
 
-    for chunk in chunk_list(product_ids, 1000):
-        payload = {
-            "action_id": action_type,
-            "product_ids": chunk
-        }
-        response = s.post(url, headers=headers, json=payload)
-        print(f'{response} {response.text}')
-        response.raise_for_status()
-        data = response.json()
-        print(f"Removed products from action {action_type}: {data}")
+    response = s.post(url, headers=headers, json=payload)
+    print(f'{response} {response.text}')
+    response.raise_for_status()
+    data = response.json()
+    print(f"Updated price for products: {data}")
 
+def set_day_prices():
+    for chunk in chunk_list(all_values[1:], 1000):
+        lst = []
+        for row in chunk:
+            dct = {"auto_action_enabled": "UNKNOWN",
+                   "currency_code": "RUB",
+                   "min_price": "800",
+                   "offer_id": "",
+                   "old_price": "0",
+                   "price": "1448",
+                   "price_strategy_enabled": "UNKNOWN",
+                   "product_id": 1386}
 
-def get_ozon_articul(products: list):
-    url = 'https://api-seller.ozon.ru/v2/product/info/list'
-    all_offer_ids = []
-    c = 1000
-    # Разбиваем список products на чанки по 1000 элементов
-    for chunk in chunk_list(products, 1000):
-        json_data = {
-            'offer_id': [],
-            'product_id': chunk,
-            'sku': [],
-        }
+            product_id = row[14] if row[14] else row[19] if row[19] else row[24] if row[24] else 0
+            night_price = row[2]
+            dct['price'] = night_price
+            dct['product_id'] = product_id
+            lst.append(dct)
 
-        response = s.post(url, json=json_data)
-        print(f'articul {response} {len(products)} | {c}')
-        if response.status_code == 200:
-            data = response.json()
-            for item in data.get('result', {}).get('items', []):
-                all_offer_ids.append(item.get('offer_id'))
-        else:
-            print(f"Error {response.status_code}: {response.text}")
-        c += 1000
+        set_product_price(api_key, lst)
 
-    return all_offer_ids
+set_day_prices()
 
-x2_product_ids = get_ozon_product_ids(x2id)
-x3_product_ids = get_ozon_product_ids(x3id)
-x4_product_ids = get_ozon_product_ids(x4id)
-x2_articul = get_ozon_articul(x2_product_ids)
-x3_articul = get_ozon_articul(x3_product_ids)
-x4_articul = get_ozon_articul(x4_product_ids)
-
-
-
-def exit_all_actions():
-    if x2_product_ids:
-        remove_from_action(api_key, x2_product_ids, x2id)
-    if x3_product_ids:
-        remove_from_action(api_key, x3_product_ids, x3id)
-    if x4_product_ids:
-        remove_from_action(api_key, x4_product_ids, x4id)
-
-
-def scheduled_tasks():
-    # Планируем задачи на определенное время
-    schedule.every().day.at(time_off_action.replace('-', ':')).do(exit_all_actions)
-
-    # Бесконечный цикл для выполнения запланированных задач
-    while True:
-        print(f"Ждем время для выхода из акции {time_off_action.replace('-', ':')}")
-        schedule.run_pending()
-        time.sleep(1)
-
-
-
-# Запуск запланированных задач
-scheduled_tasks()
 

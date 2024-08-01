@@ -1,7 +1,7 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
-from curl_cffi import requests
+import requests
 import schedule
 import time
 
@@ -192,18 +192,4 @@ def exit_all_actions():
         remove_from_action(api_key, x4_product_ids, x4id)
 
 
-def scheduled_tasks():
-    # Планируем задачи на определенное время
-    schedule.every().day.at(time_off_action.replace('-', ':')).do(exit_all_actions)
-
-    # Бесконечный цикл для выполнения запланированных задач
-    while True:
-        print(f"Ждем время для выхода из акции {time_off_action.replace('-', ':')}")
-        schedule.run_pending()
-        time.sleep(1)
-
-
-
-# Запуск запланированных задач
-scheduled_tasks()
-
+exit_all_actions()

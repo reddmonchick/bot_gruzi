@@ -69,7 +69,8 @@ class CargoKz:
         if vehicl_type:
             vehicle_type = vehicl_type.split(' ')
             for vh in vehicle_type:
-                self.vehicle_type.append(get_transport_id_by_initials(vh, transport_type))
+                self.vehicle_type.append(str(get_transport_id_by_initials(vh, transport_type)))
+        print(self.vehicle_type)
         self.vehicle_type = ','.join(self.vehicle_type)
 
 

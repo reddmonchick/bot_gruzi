@@ -78,7 +78,7 @@ def get_transport_id_by_initials(initials, transport_dict):
     for transport, id in transport_dict.items():
         if transport[:3].lower() == initials:
             return id
-    return None
+    return 0
 
 
 
@@ -91,7 +91,8 @@ class AtiSu:
         if vehicl_type:
             vehicle_type = vehicl_type.split(' ')
             for vh in vehicle_type:
-                self.vehicle_type += get_transport_id_by_initials(vh, transport_type)
+                plusik = int(get_transport_id_by_initials(vh, transport_type))
+                self.vehicle_type += plusik
 
 
         self.cargo_name = []
