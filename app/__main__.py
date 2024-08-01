@@ -278,12 +278,13 @@ def finalize_data_collection(message):
 
         a = route.split('-')[0]
         b = route.split('-')[-1]
-        atisik = AtiSu(a, b, transport_type, cargo_name)
-        fafakz = Fafakz(a, b, transport_type)
-        cargo_kz = CargoKz(a, b, transport_type, cargo_name)
+        atisik = AtiSu(a, b, transport_type, cargo_name, message.chat.id)
+        fafakz = Fafakz(a, b, transport_type, message.chat.id)
+        cargo_kz = CargoKz(a, b, transport_type, cargo_name, message.chat.id)
 
 
         if data_type == 'cargo':
+            print('запустили карго')
             try:
                 atisik.run_gruz()
             except:
@@ -312,7 +313,7 @@ def finalize_data_collection(message):
                 print('Ошибка в карго кз')
 
         try:
-            with open('output.xlsx', 'rb') as file:
+            with open(f'output{message.chat.id}.xlsx', 'rb') as file:
                 bot.send_document(message.chat.id, file)
             bot.send_message(message.chat.id, "Файл output.xlsx отправлен.")
         except Exception as e:

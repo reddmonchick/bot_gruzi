@@ -106,7 +106,9 @@ class Fafakz:
 
 
 
-    def __init__(self, punkt_a, punkt_b, vehicl_type):
+    def __init__(self, punkt_a, punkt_b, vehicl_type, id_file):
+        self.name_file = f'output{id_file}.xlsx'
+
         session = requests.Session()
         self.vehicl_typ = vehicle_types.get(vehicl_type.split()[0])
 
@@ -244,7 +246,7 @@ class Fafakz:
                 "Город прибытия",
                 "Страна прибытия", 'Дата', 'Тип машины/груза', 'Вес', 'Цена', 'Контакты' , 'Сайт']
 
-        file_path_write = 'output.xlsx'
+        file_path_write = self.name_file
         workbook = load_workbook(file_path_write)
         worksheet = workbook.active
         for rrik in flattens:
@@ -373,7 +375,7 @@ class Fafakz:
                        "Страна отправления",
                        "Город прибытия",
                        "Страна прибытия", 'Дата', 'Тип машины/груза', 'Вес', 'Цена', 'Контакты', 'Сайт']
-        file_path_write = 'output.xlsx'
+        file_path_write = self.name_file
         workbook = load_workbook(file_path_write)
         worksheet = workbook.active
         for rrik in flattens:

@@ -84,7 +84,7 @@ def get_transport_id_by_initials(initials, transport_dict):
 
 class AtiSu:
 
-    def __init__(self, punkt_a, punkt_b, vehicl_type, cargo_name):
+    def __init__(self, punkt_a, punkt_b, vehicl_type, cargo_name, id_file):
         self.punkt_a = punkt_a
         self.punkt_b = punkt_b
         self.vehicle_type = 0
@@ -99,6 +99,8 @@ class AtiSu:
             cargo_name = cargo_name.split(' ')
             for cn in cargo_name:
                 self.cargo_name.append(cargo_type.get(cn.lower(), 1))
+
+        self.name_file = f'output{id_file}.xlsx'
 
     def convert_date_to_short_format(self, date_str):
         # Исходная дата в формате ISO 8601
@@ -324,7 +326,7 @@ class AtiSu:
                        "Город прибытия",
                        "Страна прибытия", 'Дата', 'Тип машины/груза', 'Вес', 'Цена', 'Контакты', 'Сайт']
 
-        file_path_write = 'output.xlsx'
+        file_path_write = self.name_file
         workbook = Workbook()
         worksheet = workbook.active
         worksheet.title = "Data"
@@ -539,7 +541,7 @@ class AtiSu:
                        "Город прибытия",
                        "Страна прибытия", 'Дата', 'Тип машины/груза', 'Вес', 'Цена', 'Контакты', 'Сайт']
 
-        file_path_write = 'output.xlsx'
+        file_path_write = self.name_file
         workbook = Workbook()
         worksheet = workbook.active
         worksheet.title = "Data"

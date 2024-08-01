@@ -19,8 +19,10 @@ def get_transport_id_by_initials(initials, transport_dict):
 
 class CargoKz:
 
-    def __init__(self, punkt_a, punkt_b, vehicl_type, cargo_name):
+    def __init__(self, punkt_a, punkt_b, vehicl_type, cargo_name, id_file):
         self.s = requests.Session()
+
+        self.name_file = f'output{id_file}.xlsx'
 
         headers = {
             'Host': 'api.cargo.lt',
@@ -218,7 +220,7 @@ class CargoKz:
                     [from_city, from_country, to_city, to_country, date_result, trail, f'{weight} т', price_itog, contact, 'cargo-kz']
                 )
 
-        file_path_write = 'output.xlsx'
+        file_path_write = self.name_file
         workbook = load_workbook(file_path_write)
         worksheet = workbook.active
         for rrik in flattens:
@@ -366,7 +368,7 @@ class CargoKz:
                      contact, 'cargo-kz']
                 )
 
-        file_path_write = 'output.xlsx'
+        file_path_write = self.name_file
         workbook = load_workbook(file_path_write)
         worksheet = workbook.active
         for rrik in flattens:
